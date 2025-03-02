@@ -4,7 +4,7 @@
 ```dataview
 TABLE WITHOUT ID 任务名称, 完成度, 耗时
 FROM "毕业设计/进展"
-WHERE 状态 = "完成"
+WHERE state = "1"
 ```
 
 ### ⚙️ 技术实现细节
@@ -77,7 +77,7 @@ dv.taskList(dv.pages('"毕业设计"').file.tasks
 | 分布式追踪 | 跨函数调用链监控 | OpenTelemetry集成 | 日志关联度不足 |
 
 ### 📝 导师建议记录
-> **2023-11-05 王教授指导意见**  
+> **2023-11-05 指导意见**  
 > 1. 建议参考AWS Firecracker的微VM方案（文献[1]）  
 > 2. 实验数据需包含与Knative的横向对比  
 > 3. 论文第三章应补充架构决策树分析
