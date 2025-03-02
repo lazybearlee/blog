@@ -12,7 +12,8 @@ overflow: auto;  /* 新增清除浮动 */
 ">
 
 
-[<img src="https://avatars.githubusercontent.com/u/102659303?v=4" style="width:200px; vertical-align: middle;"/>]([mailto:lz1958455046@outlook.com](https://github.com/lazybearlee))
+[<img src="https://avatars.githubusercontent.com/u/102659303?v=4" style="width:200px; vertical-align: middle;"/>](https://github.com/lazybearlee)
+
 
 ### 👋 我是谁？
 - 🏫 **北京理工大学软件工程专业大四学生**  
