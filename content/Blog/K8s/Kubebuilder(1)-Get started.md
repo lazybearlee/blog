@@ -12,6 +12,8 @@ description: 描述
 summary: 摘要
 draft: false
 ---
+> 本博客主要翻译了 [get started](https://book.kubebuilder.io/getting-started) 的内容
+
 ### 入门指南
 我们将创建一个示例项目，让你了解它是如何工作的。这个示例将：
 - 协调一个Memcached自定义资源（CR），它代表在集群上部署/管理的Memcached实例。
