@@ -11,7 +11,7 @@ categories:
   - Blog
 description: 描述
 draft: false
-state: "0"
+state: "1"
 ---
 > 本篇基于 [kubebuilder book cronjob tutorial](https://book.kubebuilder.io/cronjob-tutorial/cronjob-tutorial) 完成
 
@@ -1102,12 +1102,439 @@ func (r *CronJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
 ---
 
 ## Webhooks
-- todo
+在 Kubernetes 生态中，Webhook 如同资源操作的「安检系统」，在对象持久化到 etcd 前进行拦截检查。想象你正在机场登机：
+
+- **默认 Webhook（Mutating）**：地勤人员帮你贴行李标签、分配座位（自动补全缺失信息）
+- **验证 Webhook（Validating）**：安检机检查行李尺寸和违禁品（确保符合规定）
+
 ---
 
+#### **核心流程图示**
+```mermaid
+sequenceDiagram
+    participant User as 用户(kubectl)
+    participant API as Kubernetes API
+    participant Webhook as 自定义 Webhook 服务
+    participant etcd as 存储(etcd)
+
+    User->>API: 提交 CronJob 资源
+    API->>Webhook: 转发请求（准入控制）
+    Webhook->>Webhook: 执行默认/验证逻辑
+    alt 验证通过
+        Webhook->>API: 返回修改后的对象
+        API->>etcd: 存储对象
+    else 验证失败
+        Webhook->>API: 返回错误
+        API->>User: 拒绝请求
+    end
+```
+
+---
+
+### **核心组件拆解**
+
+如果想要实现[Webhooks](https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/extensible-admission-controllers/)的准入，kubebuilder要求实现 `CustomDefaulter` 和 `CustomValidator` 。而后续的工作就会交给kubebuilder来完成。
+
+#### **1. 默认值注入（Mutating Webhook）**
+当用户提交未完整填写的 CronJob 时，系统自动补全关键字段：
+
+```go
+// 示例：自动填充并发策略
+func (d *CronJobCustomDefaulter) applyDefaults(cronJob *batchv1.CronJob) {
+    if cronJob.Spec.ConcurrencyPolicy == "" {
+        cronJob.Spec.ConcurrencyPolicy = batchv1.AllowConcurrent // ← 默认值
+    }
+}
+```
+- **典型场景**：
+  - 未设置 `suspend` 字段时自动设为 `false`
+  - 未指定历史记录保留数量时设置默认值（如保留最近 3 次成功任务）
+
+---
+
+#### **2. 复杂验证逻辑（Validating Webhook）**
+超越 OpenAPI Schema 的简单校验，实现业务级检查：
+
+```go
+// 验证 cron 表达式格式
+func validateScheduleFormat(schedule string) error {
+    if _, err := cron.ParseStandard(schedule); err != nil { // ← 使用 robfig/cron 库
+        return fmt.Errorf("invalid cron format: %v", err)
+    }
+    return nil
+}
+```
+- **优势**：
+  - 避免使用复杂的正则表达式（如 `0 * * * *` 的合法格式校验）
+  - 可集成外部检查服务（如调用内部风控系统）
+
+---
+
+#### **3. 对象生命周期控制**
+针对不同操作阶段定制检查策略：
+
+| 操作类型       | 方法                | 典型用途                     |
+|----------------|---------------------|----------------------------|
+| 创建 (Create)  | `ValidateCreate`    | 强制初始字段约束            |
+| 更新 (Update)  | `ValidateUpdate`    | 防止关键字段修改（如 ID）   |
+| 删除 (Delete)  | `ValidateDelete`    | 阻止重要资源删除            |
+
+```go
+// 示例：禁止删除运行中的 CronJob
+func (v *CronJobCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) error {
+    cronjob := obj.(*batchv1.CronJob)
+    if len(cronjob.Status.Active) > 0 {
+        return errors.New("cannot delete running cronjob")
+    }
+    return nil
+}
+```
+
+---
+
+### **关键配置详解**
+
+#### **Webhook 注册标记**
+```go
+// +kubebuilder:webhook:path=/validate-...,verbs=create;update
+```
+- **核心参数**：
+  - `path`：Webhook 服务端点路径
+  - `failurePolicy`：故障处理策略（`Fail` 或 `Ignore`）
+  - `sideEffects`：是否产生副作用（需声明 `None` 或 `Unknown`）
+  - `admissionReviewVersions`：支持的 API 版本
+
+---
+
+#### **证书管理机制**
+```mermaid
+graph LR
+    A[证书文件] --> B(证书监听器 CertWatcher)
+    B --> C[Webhook Server]
+    C --> D[Kubernetes API]
+```
+- **动态加载**：使用 `certwatcher` 自动轮转证书
+- **生产实践**：通过 Cert-Manager 自动签发 TLS 证书
+
+---
+
+### 利用 `kubebuilder` 来实现 `Webhook`
+
+```mermaid
+graph LR
+    A[创建 Webhook] --> B[导入必要包]
+    B --> C[设置日志记录器]
+    C --> D[将 Webhook 与管理器设置]
+    D --> E[使用标记生成清单]
+    E --> F[实现默认值设置]
+    E --> G[实现验证]
+    F --> H[验证 CronJob]
+    G --> H
+    H --> I[验证 CronJob 规范]
+    I --> J[验证调度格式]
+    H --> K[验证对象名称]
+```
+
+#### 1. 实现默认值设置和验证 Webhook
+若要为自定义资源定义（CRD）实现准入 Webhook，只需实现 `CustomDefaulter` 和（或）`CustomValidator` 接口，Kubebuilder 会处理其余工作，如创建 Webhook 服务器、将服务器添加到管理器、为 Webhook 创建处理程序以及在服务器中为每个处理程序注册路径。
+
+#### 2. 搭建 Webhook
+使用以下命令为 CronJob CRD 搭建 Webhook，使用 `--defaulting` 和 `--programmatic-validation` 标志，因为测试项目将使用默认值设置和验证 Webhook：
+```bash
+kubebuilder create webhook --group batch --version v1 --kind CronJob --defaulting --programmatic-validation
+```
+此命令将搭建 Webhook 函数并在 `main.go` 中将 Webhook 注册到管理器。
+
+#### 3. 代码实现
+
+##### 3.1 导入必要的包
+```go
+package v1
+
+import (
+    "context"
+    "fmt"
+
+    "github.com/robfig/cron"
+    apierrors "k8s.io/apimachinery/pkg/api/errors"
+    "k8s.io/apimachinery/pkg/runtime/schema"
+    validationutils "k8s.io/apimachinery/pkg/util/validation"
+    "k8s.io/apimachinery/pkg/util/validation/field"
+
+    "k8s.io/apimachinery/pkg/runtime"
+    ctrl "sigs.k8s.io/controller-runtime/pkg/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
+    "sigs.k8s.io/controller-runtime/pkg/webhook"
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+    batchv1 "tutorial.kubebuilder.io/project/api/v1"
+)
+```
+
+##### 3.2 设置日志记录器
+```go
+var cronjoblog = logf.Log.WithName("cronjob-resource")
+```
+
+##### 3.3 将 Webhook 与管理器进行设置
+```go
+func SetupCronJobWebhookWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewWebhookManagedBy(mgr).For(&batchv1.CronJob{}).
+        WithValidator(&CronJobCustomValidator{}).
+        WithDefaulter(&CronJobCustomDefaulter{
+            DefaultConcurrencyPolicy:          batchv1.AllowConcurrent,
+            DefaultSuspend:                    false,
+            DefaultSuccessfulJobsHistoryLimit: 3,
+            DefaultFailedJobsHistoryLimit:     1,
+        }).
+        Complete()
+}
+```
+
+##### 3.4 使用 Kubebuilder 标记生成 Webhook 清单
+```go
+// +kubebuilder:webhook:path=/mutate-batch-tutorial-kubebuilder-io-v1-cronjob,mutating=true,failurePolicy=fail,sideEffects=None,groups=batch.tutorial.kubebuilder.io,resources=cronjobs,verbs=create;update,versions=v1,name=mcronjob-v1.kb.io,admissionReviewVersions=v1
+```
+
+##### 3.5 实现默认值设置
+```go
+type CronJobCustomDefaulter struct {
+    DefaultConcurrencyPolicy          batchv1.ConcurrencyPolicy
+    DefaultSuspend                    bool
+    DefaultSuccessfulJobsHistoryLimit int32
+    DefaultFailedJobsHistoryLimit     int32
+}
+
+var _ webhook.CustomDefaulter = &CronJobCustomDefaulter{}
+
+func (d *CronJobCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+    cronjob, ok := obj.(*batchv1.CronJob)
+    if !ok {
+        return fmt.Errorf("expected an CronJob object but got %T", obj)
+    }
+    cronjoblog.Info("Defaulting for CronJob", "name", cronjob.GetName())
+    d.applyDefaults(cronjob)
+    return nil
+}
+
+func (d *CronJobCustomDefaulter) applyDefaults(cronJob *batchv1.CronJob) {
+    if cronJob.Spec.ConcurrencyPolicy == "" {
+        cronJob.Spec.ConcurrencyPolicy = d.DefaultConcurrencyPolicy
+    }
+    if cronJob.Spec.Suspend == nil {
+        cronJob.Spec.Suspend = new(bool)
+        *cronJob.Spec.Suspend = d.DefaultSuspend
+    }
+    if cronJob.Spec.SuccessfulJobsHistoryLimit == nil {
+        cronJob.Spec.SuccessfulJobsHistoryLimit = new(int32)
+        *cronJob.Spec.SuccessfulJobsHistoryLimit = d.DefaultSuccessfulJobsHistoryLimit
+    }
+    if cronJob.Spec.FailedJobsHistoryLimit == nil {
+        cronJob.Spec.FailedJobsHistoryLimit = new(int32)
+        *cronJob.Spec.FailedJobsHistoryLimit = d.DefaultFailedJobsHistoryLimit
+    }
+}
+```
+
+##### 3.6 实现验证
+```go
+// +kubebuilder:webhook:path=/validate-batch-tutorial-kubebuilder-io-v1-cronjob,mutating=false,failurePolicy=fail,sideEffects=None,groups=batch.tutorial.kubebuilder.io,resources=cronjobs,verbs=create;update,versions=v1,name=vcronjob-v1.kb.io,admissionReviewVersions=v1
+type CronJobCustomValidator struct {
+    // TODO(user): Add more fields as needed for validation
+}
+
+var _ webhook.CustomValidator = &CronJobCustomValidator{}
+
+func (v *CronJobCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    cronjob, ok := obj.(*batchv1.CronJob)
+    if !ok {
+        return nil, fmt.Errorf("expected a CronJob object but got %T", obj)
+    }
+    cronjoblog.Info("Validation for CronJob upon creation", "name", cronjob.GetName())
+    return nil, validateCronJob(cronjob)
+}
+
+func (v *CronJobCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+    cronjob, ok := newObj.(*batchv1.CronJob)
+    if !ok {
+        return nil, fmt.Errorf("expected a CronJob object for the newObj but got %T", newObj)
+    }
+    cronjoblog.Info("Validation for CronJob upon update", "name", cronjob.GetName())
+    return nil, validateCronJob(cronjob)
+}
+
+func (v *CronJobCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+    cronjob, ok := obj.(*batchv1.CronJob)
+    if !ok {
+        return nil, fmt.Errorf("expected a CronJob object but got %T", obj)
+    }
+    cronjoblog.Info("Validation for CronJob upon deletion", "name", cronjob.GetName())
+    // TODO(user): fill in your validation logic upon object deletion.
+    return nil, nil
+}
+```
+
+##### 3.7 验证 CronJob
+```go
+func validateCronJob(cronjob *batchv1.CronJob) error {
+    var allErrs field.ErrorList
+    if err := validateCronJobName(cronjob); err != nil {
+        allErrs = append(allErrs, err)
+    }
+    if err := validateCronJobSpec(cronjob); err != nil {
+        allErrs = append(allErrs, err)
+    }
+    if len(allErrs) == 0 {
+        return nil
+    }
+    return apierrors.NewInvalid(
+        schema.GroupKind{Group: "batch.tutorial.kubebuilder.io", Kind: "CronJob"},
+        cronjob.Name, allErrs)
+}
+```
+
+##### 3.8 验证 CronJob 规范
+```go
+func validateCronJobSpec(cronjob *batchv1.CronJob) *field.Error {
+    return validateScheduleFormat(
+        cronjob.Spec.Schedule,
+        field.NewPath("spec").Child("schedule"))
+}
+```
+
+##### 3.9 验证调度格式
+```go
+func validateScheduleFormat(schedule string, fldPath *field.Path) *field.Error {
+    if _, err := cron.ParseStandard(schedule); err != nil {
+        return field.Invalid(fldPath, schedule, err.Error())
+    }
+    return nil
+}
+```
+
+##### 3.10 验证对象名称
+```go
+func validateCronJobName(cronjob *batchv1.CronJob) *field.Error {
+    if len(cronjob.ObjectMeta.Name) > validationutils.DNS1035LabelMaxLength-11 {
+        return field.Invalid(field.NewPath("metadata").Child("name"), cronjob.ObjectMeta.Name, "must be no more than 52 characters")
+    }
+    return nil
+}
+```
+
+
+---
 ## 部署我们自定义的Cronjob吧
 
 
+```mermaid
+graph TD
+    A[生成清单] --> B[安装CRD]
+    B --> C[本地运行控制器]
+    C --> D[创建示例Cronjob]
+    D --> E{验证成功?}
+    E -->|是| F[构建部署镜像]
+    E -->|否| G[检查日志]
+    F --> H[部署到集群]
+    H --> I[验证集群运行]
+```
+
+### 1. 准备工作
+#### 生成API清单
+```bash
+make manifests
+```
+*作用*：更新CRD（自定义资源定义）等API清单文件。
+
+#### 安装CRD到集群
+```bash
+make install
+```
+*作用*：将CRD安装到Kubernetes集群，确保集群识别自定义资源类型。
+
+### 2. 本地运行控制器
+#### 禁用Webhook（可选）
+```bash
+export DISABLE_WEBHOOKS=true
+```
+*原因*：本地测试时避免证书和网络配置问题。
+
+#### 启动控制器
+```bash
+make run
+```
+*预期输出*：控制器启动日志，但尚未执行任何操作。
+
+
+### 3. 测试Cronjob
+#### 创建示例Cronjob
+```yaml
+# config/samples/batch_v1_cronjob.yaml
+apiVersion: batch.tutorial.kubebuilder.io/v1
+kind: CronJob
+metadata:
+  name: cronjob-sample
+spec:
+  schedule: "*/1 * * * *"  # 每分钟运行一次
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+```
+
+```bash
+kubectl create -f config/samples/batch_v1_cronjob.yaml
+```
+
+#### 验证运行状态
+```bash
+# 查看Cronjob状态
+kubectl get cronjob.batch.tutorial.kubebuilder.io -o yaml
+
+# 查看Job执行情况
+kubectl get job
+```
+
+
+### 4. 部署到集群
+#### 构建并推送镜像
+```bash
+# 替换<some-registry>和<project-name>
+make docker-build docker-push IMG=<some-registry>/<project-name>:tag
+```
+
+#### 部署到集群
+```bash
+make deploy IMG=<some-registry>/<project-name>:tag
+```
+
+#### 使用Kind集群优化（可选）
+```bash
+# 直接加载本地镜像到Kind集群
+kind load docker-image <your-image-name>:tag --name <your-kind-cluster-name>
+```
+
+
+### 5. 常见问题处理
+#### RBAC权限错误
+- **现象**：操作被拒绝，提示RBAC相关错误。
+- **解决方案**：
+  ```bash
+  # 授予集群管理员权限（谨慎操作！）
+  kubectl create clusterrolebinding cluster-admin-binding \
+    --clusterrole=cluster-admin \
+    --user=$(gcloud config get-value account)
+  ```
+
+#### 镜像权限问题
+我们需要确保镜像仓库的访问权限正确，尤其是在使用私有仓库时。
 
 ---
 ## 还有一个问题：怎么去测试我们的Cronjob呢？
