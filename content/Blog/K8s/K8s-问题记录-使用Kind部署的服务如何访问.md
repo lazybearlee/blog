@@ -1,5 +1,5 @@
 ---
-title: K8s-杂记
+title: K8s-问题记录-使用Kind部署的服务如何访问
 date: 2025-03-08
 slug: blog-post-slug
 tags:
