@@ -54,4 +54,87 @@ async def test_sklearn_kserve(rest_v1_client):
 
 当我们在集群中创建一个 V1beta1InferenceService 时，会发生什么呢？
 
-当我们研读kserve源码的时候，会发现
+## 控制器
+
+当我们研读kserve源码的时候，会发现Kserve是使用kubebuilder开发的，实际上也就是k8s的operator开发。相关内容可以看看[Kubebuilder(1)-Get started](Blog/K8s/Kubebuilder(1)-Get%20started.md)。
+
+在 `cmd/manager/main.go` 文件中，我们可以看到控制器的相关代码。而与 `InferenceService` 有关的主要是下面这两段：
+
+```go
+setupLog.Info("Setting up v1beta1 controller")
+eventBroadcaster := record.NewBroadcaster()
+eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: clientSet.CoreV1().Events("")})
+if err = (&v1beta1controller.InferenceServiceReconciler{
+	Client:    mgr.GetClient(),
+	Clientset: clientSet,
+	Log:       ctrl.Log.WithName("v1beta1Controllers").WithName("InferenceService"),
+	Scheme:    mgr.GetScheme(),
+	Recorder: eventBroadcaster.NewRecorder(
+		mgr.GetScheme(), corev1.EventSource{Component: "v1beta1Controllers"}),
+}).SetupWithManager(mgr, deployConfig, ingressConfig); err != nil {
+	setupLog.Error(err, "unable to create controller", "v1beta1Controller", "InferenceService")
+	os.Exit(1)
+}
+```
+
+以及
+
+```go
+if err = ctrl.NewWebhookManagedBy(mgr).
+	For(&v1beta1.InferenceService{}).
+	WithDefaulter(&v1beta1.InferenceServiceDefaulter{}).
+	WithValidator(&v1beta1.InferenceServiceValidator{}).
+	Complete(); err != nil {
+	setupLog.Error(err, "unable to create webhook", "webhook", "v1beta1")
+	os.Exit(1)
+}
+
+if err = ctrl.NewWebhookManagedBy(mgr).
+	For(&v1alpha1.LocalModelCache{}).
+	WithValidator(&localmodelcache.LocalModelCacheValidator{Client: mgr.GetClient()}).
+	Complete(); err != nil {
+	setupLog.Error(err, "unable to create webhook", "webhook", "localmodelcache")
+	os.Exit(1)
+}
+```
+
+分别配置控制器和webhook准入。
+
+`SetupWithManager` 方法实现了控制器的自适应注册机制，根据集群环境动态配置监听资源。
+
+```go
+// 1. 基础监听配置
+ctrlBuilder := ctrl.NewControllerManagedBy(mgr).
+    For(&v1beta1.InferenceService{}).    // 主资源
+    Owns(&appsv1.Deployment{})           // 必需组件
+```
+
+```go
+// 2. Knative 服务监听
+if ksvcFound {
+    ctrlBuilder = ctrlBuilder.Owns(&knservingv1.Service{})
+}
+```
+
+```go
+// 3. 入口配置
+// Istio VirtualService
+if vsFound && !ingressConfig.DisableIstioVirtualHost {
+    ctrlBuilder = ctrlBuilder.Owns(&istioclientv1beta1.VirtualService{})
+} 
+
+// Gateway API vs Ingress
+if ingressConfig.EnableGatewayAPI {
+    ctrlBuilder = ctrlBuilder.Owns(&gatewayapiv1.HTTPRoute{})
+} else {
+    ctrlBuilder = ctrlBuilder.Owns(&netv1.Ingress{})
+}
+```
+- 使用 `Owns()` 建立资源所有权关系
+- 通过配置控制 Istio 和网关 API 的使用
+- 错误处理和日志记录完善
+
+然后让我们回到控制器的最主要方法—— `Reconcile` 。
+
+## `Reconcile`
+
