@@ -18,7 +18,7 @@ overflow: auto;  /* 新增清除浮动 */
 ### 👋 我是谁？
 - 🏫 **北京理工大学软件工程专业大四学生**  
 - 💻 **主攻方向**：`分布式系统` `云原生技术` `Serverless`  
-- 📌 **当前状态**：正在完成毕业设计《基于Serverless的AI推理系统》  
+- 📌 **当前状态**：正在完成毕业设计
 - 📫 **联系我**：  [<img src="https://img.icons8.com/color/48/000000/gmail.png" style="width:20px; vertical-align: middle;"/>](mailto:lz1958455046@outlook.com) [<img src="https://img.icons8.com/fluent/48/000000/github.png" style="width:20px; vertical-align: middle;"/>](https://github.com/lazybearlee)
 
 </div>
