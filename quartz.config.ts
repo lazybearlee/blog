@@ -17,7 +17,7 @@ const config: QuartzConfig = {
     },
     locale: "zh-CN",
     baseUrl: "lazybearlee.xyz",
-    ignorePatterns: ["private", "templates", ".obsidian"],
+    ignorePatterns: ["private", "templates", ".obsidian","dairy", "drafts", "archive", "assets", "static", "Excalidraw"],
     defaultDateType: "created",
     generateSocialImages: false,
     theme: {

@@ -76,7 +76,7 @@ $G_k y_k + \delta_k + Q_k y_k = \delta_k$
 为了让等式成立，我们需要：
 $$ Q_k y_k = -G_k y_k $$
 
-图片中给出 $Q_k = -\frac{G_k y_k y_k^T G_k}{y_k^T G_k y_k}$。
+DFP中给出 $Q_k = -\frac{G_k y_k y_k^T G_k}{y_k^T G_k y_k}$。
 让我们验证这个 $Q_k$ 是否满足条件 $Q_k y_k = -G_k y_k$:
 
 $$ Q_k y_k = \left( -\frac{G_k y_k y_k^T G_k}{y_k^T G_k y_k} \right) y_k $$
