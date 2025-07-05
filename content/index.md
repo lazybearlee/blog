@@ -1,5 +1,6 @@
 ---
 title: Welcome to Lazybearlee's Blog
+date: 2024-10-12
 ---
 
 <!-- 个人简介卡 -->

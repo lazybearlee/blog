@@ -9,7 +9,7 @@ tags:
 categories:
   - Blog
 description: 描述
-draft: true
+draft: false
 state: "0"
 ---
 ## DFP 算法的推导 (Davidon–Fletcher–Powell Update)
