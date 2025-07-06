@@ -6,7 +6,7 @@ tags:
   - 机器学习
   - SVM
 categories:
-  - 分类
+  - 笔记
 description: 描述
 draft: false
 state: "0"
