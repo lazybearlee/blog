@@ -1,5 +1,5 @@
 ---
-title: 主成分分析PCA-总体（一）
+title: 主成分分析PCA-总体主成分分析
 date: 2025-07-10
 slug: blog-post-slug
 tags:
@@ -8,7 +8,7 @@ tags:
 categories:
   - 笔记
 description: 描述
-draft: true
+draft: false
 state: "0"
 ---
 ### **基本想法**
@@ -175,7 +175,7 @@ $$
 
 ---
 
-### **第一步：证明第一主成分**
+#### **第一步：证明第一主成分**
 
 我们的目标是求解下面这个带约束的优化问题：
 
@@ -183,7 +183,7 @@ $$
 \max_{\mathbf{\alpha}_1} \quad \mathbf{\alpha}_1^T \mathbf{\Sigma} \mathbf{\alpha}_1 \quad \quad \text{s.t.} \quad \mathbf{\alpha}_1^T \mathbf{\alpha}_1 = 1
 $$
 
-#### **1. 构造拉格朗日函数 (Why Lagrange Multipliers?)**
+##### **1. 构造拉格朗日函数 (Why Lagrange Multipliers?)**
 
 *   **回顾**：拉格朗日乘子法是解决“带等式约束的优化问题”的标准工具。它的核心思想是，将约束条件乘以一个拉格朗日乘子（比如 $\lambda$），然后从目标函数中减去它，从而构造一个新的、无约束的拉格朗日函数。通过对这个新函数求导并令其为0，我们就能找到原问题的可能极值点。
 
@@ -197,7 +197,7 @@ $$
     L(\mathbf{\alpha}_1, \lambda) = f(\mathbf{\alpha}_1) - \lambda g(\mathbf{\alpha}_1) = \mathbf{\alpha}_1^T \mathbf{\Sigma} \mathbf{\alpha}_1 - \lambda (\mathbf{\alpha}_1^T \mathbf{\alpha}_1 - 1)
     $$
 
-#### **2. 对 $\mathbf{\alpha}_1$ 求导并令其为0 (The Calculus)**
+##### **2. 对 $\mathbf{\alpha}_1$ 求导并令其为0 (The Calculus)**
 
 现在，我们将 $L(\mathbf{\alpha}_1, \lambda)$ 看作是关于变量 $\mathbf{\alpha}_1$ 的函数，并对它求梯度。这里需要用到两个矩阵求导的常用公式：
 *   $\frac{\partial (\mathbf{x}^T \mathbf{A} \mathbf{x})}{\partial \mathbf{x}} = 2\mathbf{A}\mathbf{x}$ (当 $\mathbf{A}$ 是对称矩阵时，而在我们本次求解中 $\mathbf{\Sigma}$ 就是对称的)
@@ -221,7 +221,7 @@ $$
     \implies \mathbf{\Sigma}\mathbf{\alpha}_1 = \lambda \mathbf{\alpha}_1
     $$
 
-#### **3. 解读结果**
+##### **3. 解读结果**
 
 $\mathbf{\Sigma}\mathbf{\alpha}_1 = \lambda \mathbf{\alpha}_1$ 这个方程眼熟吗？这不就是线性代数中**特征值和特征向量的定义**！
 
@@ -247,7 +247,7 @@ $$
 
 ---
 
-### **第二步：证明第二主成分**
+#### **第二步：证明第二主成分**
 
 现在的问题变得更复杂了，我们有两个约束条件：
 
@@ -264,7 +264,7 @@ $$
 \end{cases}
 $$
 
-#### **1. 简化约束2 (The Trick)**
+##### **1. 简化约束2 (The Trick)**
 
 李航老师在书中用了一个非常巧妙的简化。让我们看看约束2：$\mathbf{\alpha}_1^T \mathbf{\Sigma} \mathbf{\alpha}_2 = 0$。
 
@@ -287,7 +287,7 @@ $$
 
 这极大地简化了问题！李航老师在书中直接使用了这个正交条件，但这是背后的推导。
 
-#### **2. 构造新的拉格朗日函数**
+##### **2. 构造新的拉格朗日函数**
 
 现在我们的优化问题是：
 
@@ -301,13 +301,13 @@ $$
 L(\mathbf{\alpha}_2, \lambda, \phi) = \mathbf{\alpha}_2^T \mathbf{\Sigma} \mathbf{\alpha}_2 - \lambda(\mathbf{\alpha}_2^T \mathbf{\alpha}_2 - 1) - \phi(\mathbf{\alpha}_1^T \mathbf{\alpha}_2)
 $$
 
-#### **3. 对 $\mathbf{\alpha}_2$ 求导并令其为0**
+##### **3. 对 $\mathbf{\alpha}_2$ 求导并令其为0**
 
 $$
 \frac{\partial L}{\partial \mathbf{\alpha}_2} = \mathbf{\Sigma}\mathbf{\alpha}_2 - \lambda\mathbf{\alpha}_2 - \phi\mathbf{\alpha}_1 = \mathbf{0}
 $$
 
-#### **4. 消去乘子 $\phi$ 
+##### **4. 消去乘子 $\phi$ 
 
 这个方程里有我们不想要的 $\phi$。如何消掉它？我们可以利用向量的正交性。
 用 $\mathbf{\alpha}_1^T$ 左乘上式两端：
@@ -336,10 +336,10 @@ $$
 现在把 $\phi=0$ 代回到求导后的方程 $\mathbf{\Sigma}\mathbf{\alpha}_2 - \lambda\mathbf{\alpha}_2 - \phi\mathbf{\alpha}_1 = \mathbf{0}$ 中，得到：
 
 $$
-\mathbf{\Sigma}\mathbf{\alpha}_2 - \lambda\mathbf{\alpha}_2 = \mathbf{0} \implies \mathbf{\Sigma}\mathbf{\alpha}_2 = \lambda\mathbf{\alpha}_2
+\mathbf{\Sigma}\mathbf{\alpha}_2 - 2\lambda\mathbf{\alpha}_2 = \mathbf{0} \implies \mathbf{\Sigma}\mathbf{\alpha}_2 = \lambda\mathbf{\alpha}_2
 $$
 
-#### **5. 解读结果**
+##### **5. 看看结果**
 
 这和我们对第一主成分的推导结果形式完全一样！它表明，$\mathbf{\alpha}_2$ 也必须是 $\mathbf{\Sigma}$ 的一个特征向量。
 
@@ -351,7 +351,7 @@ $$
 
 ---
 
-### **第三步：推广到第 k 主成分**
+#### **第三步：推广到第 k 主成分**
 
 通过数学归纳法，我们可以将这个逻辑推广下去。
 假设我们已经求出了前 $k-1$ 个主成分，它们的系数向量是 $\mathbf{\alpha}_1, \dots, \mathbf{\alpha}_{k-1}$，对应 $\mathbf{\Sigma}$ 的前 $k-1$ 大的特征值 $\lambda_1, \dots, \lambda_{k-1}$。
@@ -372,7 +372,7 @@ $$
 
 ---
 
-### **推论 16.1 和主要性质的解读**
+### **推论 16.1 和主要性质**
 
 定理证明之后，剩下的性质就都是这个核心结论的自然推论了。
 
@@ -474,9 +474,12 @@ $$
             *   因为 $\mathbf{\Sigma} \mathbf{\alpha}_k = \lambda_k \mathbf{\alpha}_k$, 两边取转置得到 $\mathbf{\alpha}_k^T \mathbf{\Sigma} = \lambda_k \mathbf{\alpha}_k^T$.
             *   所以 $\text{cov}(y_k, x_i) = (\lambda_k \mathbf{\alpha}_k^T) \mathbf{e}_i = \lambda_k (\mathbf{\alpha}_k^T \mathbf{e}_i) = \lambda_k \alpha_{ik}$ (其中 $\alpha_{ik}$ 是向量 $\mathbf{\alpha}_k$ 的第 $i$ 个分量)。
     *   **组合起来**:
-        $$
-        \rho(y_k, x_i) = \frac{\lambda_k \alpha_{ik}}{\sqrt{\lambda_k \sigma_{ii}}} = \frac{\sqrt{\lambda_k} \alpha_{ik}}{\sqrt{\sigma_{ii}}}
-        $$
+
+> [!important] 因子负荷量
+>    $$
+>   \rho(y_k, x_i) = \frac{\lambda_k \alpha_{ik}}{\sqrt{\lambda_k \sigma_{ii}}} = \frac{\sqrt{\lambda_k} \alpha_{ik}}{\sqrt{\sigma_{ii}}}
+>   $$
+> 
 
 *   **性质(4)**：第k个主成分与所有原始变量的相关系数的平方和，等于其方差（特征值）。这是对主成分“能量”的另一种解释。
     *   **证明**:
@@ -489,3 +492,258 @@ $$
         因此，上式等于 $\lambda_k \cdot 1 = \lambda_k$。得证。
 
 *   **性质(5)**：某个原始变量与所有主成分的相关系数的平方和为1（假设该变量已标准化）。这说明所有主成分一起，可以完全解释原始变量的方差。
+
+---
+
+### **主成分的个数**
+
+这一小节的根本目的，是为我们进行主成分分析的核心目标——**降维**。它旨在证明：当我们决定只保留 $q$ 个新变量来近似原始数据时，选择前 $q$ 个主成分是保留信息（即方差）的最优策略。这个结论由 **定理16.2** 给出。
+
+#### **定理 16.2**
+
+> [!important] 定理 16.2
+> 对任意正整数 $q$, $1 \le q \le m$，考虑从 $m$ 维随机变量 $\mathbf{x}$ 到 $q$ 维随机变量 $\mathbf{y}$ 的任意正交线性变换
+> 
+> $$
+> \mathbf{y} = \mathbf{B}^T \mathbf{x}
+> $$
+> 
+> 其中，$\mathbf{B}$ 是一个 $m \times q$ 矩阵，其列向量是标准正交的（即 $\mathbf{B}^T\mathbf{B} = \mathbf{I}_q$）。变换后变量 $\mathbf{y}$ 的协方差矩阵为
+> 
+> $$
+> \mathbf{\Sigma_y} = \mathbf{B}^T \mathbf{\Sigma} \mathbf{B}
+> $$
+> 
+> 则 $\mathbf{\Sigma_y}$ 的迹 $\text{tr}(\mathbf{\Sigma_y})$ 在 $\mathbf{B} = \mathbf{A}_q$ 时取得最大值。这里的 $\mathbf{A}_q = [\mathbf{\alpha}_1, \mathbf{\alpha}_2, \dots, \mathbf{\alpha}_q]$ 是由协方差矩阵 $\mathbf{\Sigma}$ 的前 $q$ 个特征向量（对应前 $q$ 大的特征值）构成的矩阵。
+
+---
+
+#### **定理 16.2 的证明**
+
+**我们的目标**: 求解以下优化问题：
+
+$$
+\max_{\mathbf{B}} \quad \text{tr}(\mathbf{B}^T \mathbf{\Sigma} \mathbf{B}) \quad \quad \text{s.t.} \quad \mathbf{B}^T\mathbf{B} = \mathbf{I}_q
+$$
+
+这里的 $\text{tr}(\mathbf{\Sigma_y})$ 是新变量 $y_1, \dots, y_q$ 的方差之和，代表了变换后数据所保留的总方差。
+
+**第一步：基变换——用主成分基底表示B**
+
+这是证明中最精妙的一步。我们知道，由协方差矩阵 $\mathbf{\Sigma}$ 的 $m$ 个标准正交特征向量 $\{\mathbf{\alpha}_1, \mathbf{\alpha}_2, \dots, \mathbf{\alpha}_m\}$ 构成的矩阵 $\mathbf{A}$，是 $m$ 维空间的一组标准正交基。
+
+这意味着，该空间中的任何一个 $m$ 维向量都可以由这组基线性表示。我们的矩阵 $\mathbf{B}$ 是一个 $m \times q$ 的矩阵，它的每一个列向量 $\boldsymbol{\beta}_k$ ($k=1, \dots, q$) 都是一个 $m$ 维向量。因此，$\boldsymbol{\beta}_k$ 可以表示为：
+
+$$
+\boldsymbol{\beta}_k = \sum_{j=1}^m c_{jk} \boldsymbol{\alpha}_j
+$$
+
+其中，$c_{jk}$ 是向量 $\boldsymbol{\beta}_k$ 在基向量 $\boldsymbol{\alpha}_j$ 上的投影坐标。
+
+将这 $q$ 个列向量的表达式合并，可以得到矩阵形式，即书中的 **式(16.25)**：
+
+$$
+\mathbf{B} = \mathbf{AC}
+$$
+
+这里，$\mathbf{A}$ 是 $m \times m$ 的基矩阵，$\mathbf{C}$ 是一个 $m \times q$ 的系数矩阵，其元素为 $c_{jk}$。
+
+**第二步：用新系数C重写目标函数**
+
+现在我们将 $\mathbf{B} = \mathbf{AC}$ 代入目标函数 $\text{tr}(\mathbf{B}^T \mathbf{\Sigma} \mathbf{B})$：
+
+$$
+\begin{align*}
+\text{tr}(\mathbf{B}^T \mathbf{\Sigma} \mathbf{B}) &= \text{tr}\left( (\mathbf{AC})^T \mathbf{\Sigma} (\mathbf{AC}) \right) \\
+&= \text{tr}\left( \mathbf{C}^T \mathbf{A}^T \mathbf{\Sigma} \mathbf{A} \mathbf{C} \right) && \text{（利用转置性质 $(XY)^T = Y^T X^T$）}
+\end{align*}
+$$
+
+我们在 16.1.3 节已经知道，$\mathbf{A}^T \mathbf{\Sigma} \mathbf{A} = \mathbf{\Lambda}$，其中 $\mathbf{\Lambda} = \text{diag}(\lambda_1, \dots, \lambda_m)$ 是由 $\mathbf{\Sigma}$ 的特征值构成的对角矩阵。于是上式变为：
+
+$$
+\text{tr}\left( \mathbf{C}^T \mathbf{\Lambda} \mathbf{C} \right)
+$$
+
+为了求解这个迹，我们利用迹的循环性质 $\text{tr}(XYZ) = \text{tr}(ZXY)$:
+
+$$
+\begin{align*}
+\text{tr}\left( \mathbf{C}^T \mathbf{\Lambda} \mathbf{C} \right) &= \text{tr}\left( \mathbf{\Lambda} \mathbf{C} \mathbf{C}^T \right) && \text{（令 $X=\mathbf{C}^T, Y=\mathbf{\Lambda}, Z=\mathbf{C}$）}
+\end{align*}
+$$
+
+令矩阵 $\mathbf{E} = \mathbf{C} \mathbf{C}^T$，这是一个 $m \times m$ 的矩阵。其对角线元素 $E_{jj}$ 是 $\mathbf{C}$ 的第 $j$ 行（记为 $\mathbf{c}_j^T$）与自身点乘的结果：$E_{jj} = \mathbf{c}_j^T \mathbf{c}_j = \sum_{k=1}^q c_{jk}^2$。
+由于 $\mathbf{\Lambda}$ 是对角矩阵，$\text{tr}(\mathbf{\Lambda E})$ 的计算非常简单：
+
+$$
+\text{tr}(\mathbf{\Lambda E}) = \sum_{j=1}^m \lambda_j E_{jj} = \sum_{j=1}^m \lambda_j \left( \sum_{k=1}^q c_{jk}^2 \right) = \sum_{j=1}^m \sum_{k=1}^q \lambda_j c_{jk}^2
+$$
+
+这就是书中的 **式(16.26)**，我们把目标函数成功地用系数 $c_{jk}$ 表示了出来。
+
+**第三步：用新系数C重写约束条件**
+
+我们的原始约束是 $\mathbf{B}$ 的列向量标准正交，即 $\mathbf{B}^T\mathbf{B} = \mathbf{I}_q$。同样代入 $\mathbf{B} = \mathbf{AC}$：
+
+$$
+\mathbf{B}^T\mathbf{B} = (\mathbf{AC})^T(\mathbf{AC}) = \mathbf{C}^T \mathbf{A}^T \mathbf{A} \mathbf{C} = \mathbf{C}^T \mathbf{I}_m \mathbf{C} = \mathbf{C}^T \mathbf{C} = \mathbf{I}_q
+$$
+
+约束条件巧妙地转化为了对系数矩阵 $\mathbf{C}$ 的约束：$\mathbf{C}^T \mathbf{C} = \mathbf{I}_q$。==这表明，**矩阵 $\mathbf{C}$ 的 $q$ 个列向量也是标准正交的**。==
+
+这个约束还隐含了另一个重要性质，即 **式(16.28)** 的由来：
+1.  首先，由 $\mathbf{C}^T\mathbf{C} = \mathbf{I}_q$，取迹可得 **式(16.27)**:
+    
+    $$
+    \text{tr}(\mathbf{C}^T\mathbf{C}) = \text{tr}(\mathbf{I}_q) = q \implies \sum_{k=1}^q \sum_{j=1}^m c_{jk}^2 = q
+    $$
+    
+2.  其次，由于 $\mathbf{C}$ 的列是标准正交的，我们可以将这 $q$ 个 $m$ 维列向量看作是某个 $m \times m$ 正交矩阵 $\mathbf{D}$ 的前 $q$ 列。
+3.  因为 $\mathbf{D}$ 是正交矩阵，所以它的**行向量**也是标准正交的，即每一行的模长为1。
+4.  $\mathbf{C}$ 的第 $j$ 行只是 $\mathbf{D}$ 的第 $j$ 行的前 $q$ 个元素。因此，$\mathbf{C}$ 的第 $j$ 行的模长平方必然小于等于其所在母体（$\mathbf{D}$ 的第 $j$ 行）的模长平方（即1）。
+    
+    $$
+    \sum_{k=1}^q c_{jk}^2 \le 1 \quad \text{for } j=1, \dots, m
+    $$
+    
+    这就是 **式(16.28)**。
+
+**第四步：求解最终的优化问题**
+
+现在，我们的问题被彻底转化为一个关于系数 $c_{jk}$ 的优化问题：
+
+$$
+\max_{\{c_{jk}\}} \quad \sum_{j=1}^m \lambda_j \left( \sum_{k=1}^q c_{jk}^2 \right)
+$$
+
+约束条件为：
+1.  $\sum_{j=1}^m \left( \sum_{k=1}^q c_{jk}^2 \right) = q$
+2.  $\sum_{k=1}^q c_{jk}^2 \le 1$  (对每个 $j$)
+
+这是一个经典的资源分配问题。我们将总量为 $q$ 的“能量”（$\sum\sum c_{jk}^2$）分配给 $m$ 个“项目”（由 $j$ 索引），每个项目的“回报率”是 $\lambda_j$。为了使总回报最大，我们自然应该将所有能量优先分配给回报率最高的项目。
+
+由于特征值已经排序 $\lambda_1 \ge \lambda_2 \ge \dots \ge \lambda_m$，最优策略是：
+*   将前 $q$ 个项目的能量槽加满：$\sum_{k=1}^q c_{jk}^2 = 1$  for $j=1, \dots, q$
+*   不给后面的项目分配任何能量：$\sum_{k=1}^q c_{jk}^2 = 0$  for $j=q+1, \dots, m$
+
+这个分配方案满足所有约束条件。这个条件对应 **式(16.29)**。
+
+满足这个条件的最简洁的系数矩阵 $\mathbf{C}$ 是：
+
+$$
+\mathbf{C} = \begin{pmatrix} \mathbf{I}_q \\ \mathbf{0}_{(m-q) \times q} \end{pmatrix}
+$$
+
+即一个 $m \times q$ 矩阵，其左上角是 $q \times q$ 的单位阵，其余部分是零。
+此时，最优的 $\mathbf{B}$ 为：
+
+$$
+\mathbf{B} = \mathbf{AC} = [\mathbf{\alpha}_1, \dots, \mathbf{\alpha}_m] \begin{pmatrix} \mathbf{I}_q \\ \mathbf{0} \end{pmatrix} = [\mathbf{\alpha}_1, \dots, \mathbf{\alpha}_q] = \mathbf{A}_q
+$$
+
+**定理16.2证毕**。这证明了，要用 $q$ 个维度最大化保留原始方差，就必须选择前 $q$ 个主成分。
+
+#### **方差贡献率**
+
+在实际操作中，我们用以下指标来决定要保留的主成分个数 $k$：
+
+*   **定义16.2 第k主成分的方差贡献率 (Variance Contribution Rate)**:
+    
+    $$
+    \eta_k = \frac{\lambda_k}{\sum_{i=1}^m \lambda_i}
+    $$
+    
+    它表示第 $k$ 个主成分保留了总方差的百分之多少。
+
+*   **k个主成分的累计方差贡献率 (Cumulative Variance Contribution Rate)**:
+    
+    $$
+    K_k = \sum_{i=1}^k \eta_i = \frac{\sum_{i=1}^k \lambda_i}{\sum_{i=1}^m \lambda_i}
+    $$
+    
+    它表示前 $k$ 个主成分一共保留了总方差的百分之多少。通常我们会设定一个阈值（如80%, 90%），选择使 $K_k$ 首次超过该阈值的 $k$ 作为降维后的维度。
+
+---
+
+### **规范化变量的总体主成分**
+
+这一节处理一个非常实际的问题：当原始数据中不同变量的单位或量级相差悬殊时，直接做PCA是不合理的。
+
+#### **量纲带来的影响**
+
+PCA的核心是最大化方差。如果一个变量的数值很大（例如用“克”作单位的体重），其方差会远大于数值小的变量（例如用“米”作单位的身高）。这会导致方差大的变量在主成分中占据绝对主导地位，而方差小的变量几乎被忽略，这与变量本身的实际重要性无关，仅仅是单位选择的结果。
+
+#### **使用变量规范化消除量纲影响**
+
+为了让每个变量在分析中具有同等地位，我们先对其进行**规范化（或称标准化）**，如 **式(16.33)** 所示：
+
+$$
+x_i^* = \frac{x_i - E(x_i)}{\sqrt{\text{var}(x_i)}} = \frac{x_i - \mu_i}{\sqrt{\sigma_{ii}}}
+$$
+
+经过规范化后，新的变量 $x_i^*$ 具有如下优良特性：
+*   均值 $E(x_i^*) = 0$
+*   方差 $\text{var}(x_i^*) = 1$
+
+#### **PCA作用于相关矩阵R**
+
+对规范化后的变量 $x^*$ 做PCA，等价于对它们的协方差矩阵进行特征值分解。我们来计算这个新的协方差矩阵：
+
+$$
+\begin{align*}
+\text{cov}(x_i^*, x_j^*) &= E[x_i^* x_j^*] - E[x_i^*]E[x_j^*] \\
+&= E\left[ \left(\frac{x_i - \mu_i}{\sqrt{\sigma_{ii}}}\right) \left(\frac{x_j - \mu_j}{\sqrt{\sigma_{jj}}}\right) \right] - 0 \cdot 0 \\
+&= \frac{E[(x_i-\mu_i)(x_j-\mu_j)]}{\sqrt{\sigma_{ii}}\sqrt{\sigma_{jj}}} \\
+&= \frac{\text{cov}(x_i, x_j)}{\sqrt{\text{var}(x_i)}\sqrt{\text{var}(x_j)}}
+\end{align*}
+$$
+
+这个最终的表达式正是**原始变量 $x_i$ 和 $x_j$ 的相关系数 $\rho_{ij}$ 的定义**！
+
+**结论**: 对规范化变量 $x^*$ 进行主成分分析，等价于对**原始变量的相关矩阵 R** 进行主成分分析。
+
+#### **规范化主成分的性质**
+
+所有之前基于协方差矩阵 $\mathbf{\Sigma}$ 的性质，现在都可以平行地应用于相关矩阵 $\mathbf{R}$。我们只需做如下替换：$\mathbf{\Sigma} \to \mathbf{R}$, $\lambda_k \to \lambda_k^*$, $\mathbf{\alpha}_k \to \mathbf{e}_k^*$, $\sigma_{ii} \to \text{var}(x_i^*)=1$。
+
+1.  **性质(1): 规范化主成分的协方差矩阵**
+    变换后的新变量 $y^*$ 的协方差矩阵是对角矩阵，对角元素是相关矩阵 $\mathbf{R}$ 的特征值：
+    
+    $$
+    \mathbf{\Lambda}^* = \text{diag}(\lambda_1^*, \lambda_2^*, \dots, \lambda_m^*)
+    $$
+
+2.  **性质(2): 总方差**
+    总方差不变，且等于矩阵的维度 $m$：
+    
+    $$
+    \sum_{k=1}^m \lambda_k^* = \text{tr}(\mathbf{R}) = \sum_{i=1}^m \rho_{ii} = \sum_{i=1}^m 1 = m
+    $$
+
+3.  **性质(3): 因子负荷量 (Factor Loading)**
+    第 $k$ 个主成分 $y_k^*$ 与第 $i$ 个规范化原始变量 $x_i^*$ 的相关系数为：
+    
+    $$
+    \rho(y_k^*, x_i^*) = \sqrt{\lambda_k^*} e_{ik}^*
+    $$
+    
+    （推导：$\rho = \frac{\text{cov}(y_k^*, x_i^*)}{\sqrt{\text{var}(y_k^*)\text{var}(x_i^*)}} = \frac{\lambda_k^* e_{ik}^*}{\sqrt{\lambda_k^* \cdot 1}} = \sqrt{\lambda_k^*} e_{ik}^*$。其中 $e_{ik}^*$ 是 $\mathbf{R}$ 的第 $k$ 个特征向量 $\mathbf{e}_k^*$ 的第 $i$ 个分量。）
+
+4.  **性质(4): 单个主成分的因子负荷量平方和**
+    第 $k$ 个主成分 $y_k^*$ 与所有原始变量的相关系数的平方和等于其方差（即对应的特征值）：
+    
+    $$
+    \sum_{i=1}^m \rho^2(y_k^*, x_i^*) = \sum_{i=1}^m (\sqrt{\lambda_k^*} e_{ik}^*)^2 = \lambda_k^* \sum_{i=1}^m (e_{ik}^*)^2 = \lambda_k^* \cdot 1 = \lambda_k^*
+    $$
+    
+    （因为 $\mathbf{e}_k^*$ 是单位向量，其分量平方和为1。）
+
+5.  **性质(5): 单个原始变量的因子负荷量平方和**
+    第 $i$ 个原始变量 $x_i^*$ 与所有主成分的相关系数的平方和等于1：
+    
+    $$
+    \sum_{k=1}^m \rho^2(y_k^*, x_i^*) = 1
+    $$
+    
+    这表明，所有的主成分合在一起，可以完全解释每一个（规范化后的）原始变量的方差（方差为1）。
