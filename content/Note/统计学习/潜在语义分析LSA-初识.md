@@ -8,7 +8,7 @@ tags:
 categories:
   - 笔记
 description: 描述
-draft: true
+draft: false
 state: "0"
 ---
 ### 1. 问题的源起：词向量空间模型的局限性
