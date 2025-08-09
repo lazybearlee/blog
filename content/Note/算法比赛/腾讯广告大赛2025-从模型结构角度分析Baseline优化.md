@@ -26,18 +26,15 @@ state: "0"
     *   `feat2tensor` 处理了变长序列和数组特征的Padding。
     *   `feat2emb` 则通过各自的 `nn.Embedding` 或 `nn.Linear` 层将这些特征转换为Embedding，并进行初步的拼接和线性融合 (`userdnn`, `itemdnn`)。
     *   **功能：** 为Transformer编码器提供统一格式的输入。
-
 2.  **位置编码层：**
     *   为序列中的每个位置添加可学习的位置Embedding，以捕获序列中行为的顺序信息。
     *   **功能：** 弥补Transformer自注意力机制的位置无关性，使模型理解序列的时间依赖。
-
 3.  **Transformer编码器：**
     *   由 `num_blocks` 层堆叠的Transformer块组成。每个块包含：
         *   **Flash多头注意力 (`FlashMultiHeadAttention`)：** 核心机制，允许模型同时关注序列中不同位置的不同表示子空间。通过Flash Attention优化，提升了长序列处理效率。
         *   **逐点前馈网络 (`PointWiseFeedForward`)：** 对注意力输出进行非线性变换，增加模型表达能力。
         *   **Layer Normalization (`LayerNorm`) 和残差连接：** 用于稳定训练和加速收敛，尤其是在深层网络中。
     *   **功能：** 深度捕获用户行为序列内部的复杂依赖关系和用户兴趣的动态演变，输出上下文感知的序列特征表示 (`log_feats`)。
-
 4.  **预测/推理层：**
     *   **训练阶段 (`forward`)：** 接收Transformer编码后的用户序列特征 (`log_feats`)，以及正样本和负样本的Embedding，计算它们之间的相似度（Logits），用于损失函数计算。
     *   **推理阶段 (`predict`)：** 通常提取 `log_feats` 中最后一个有效位置的Embedding作为用户或会话的最终表征，用于与物品Embedding进行相似度计算，从而生成推荐候选。
