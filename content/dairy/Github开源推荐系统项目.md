@@ -10,10 +10,6 @@ description: 描述
 draft: true
 state: "0"
 ---
-
-### 比赛相关链接
-- [2025 百度商业 AI 技术创新大赛赛道 1：生成式广告推荐算法优化 - 飞桨 AI Studio 星河社区](https://aistudio.baidu.com/projectdetail/8952726)
-
 ### 开源项目相关链接
 - [wds1996/GNPR - SID: KDD2025, Gen Next POI Rec with Semantic ID](https://github.com/wds1996/GNPR-SID)
 - [facebookresearch/RPG_KDD2025: Code for RPG in KDD'25 Paper "Generating Long Semantic IDs in Parallel for Recommendation"](https://github.com/facebookresearch/RPG_KDD2025)
@@ -30,3 +26,4 @@ state: "0"
 - [google - deepmind/action_piece](https://github.com/google-deepmind/action_piece)
 - [EnkiXin/Hgformer](https://github.com/EnkiXin/Hgformer)
 - [USTC - StarTeam/GE4Rec: ICML2025 | From Feature Interaction to Feature Generation: A Generative Paradigm of CTR Prediction Models](https://github.com/USTC-StarTeam/GE4Rec)
+- [Generative Recommendation with Semantic IDs (GRID)](https://github.com/snap-research/GRID)
