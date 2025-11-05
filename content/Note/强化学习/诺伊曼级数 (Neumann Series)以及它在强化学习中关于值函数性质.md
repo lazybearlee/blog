@@ -7,11 +7,10 @@ tags:
 categories:
   - 笔记
 description: 描述
-draft: true
+draft: false
 state: "0"
 ---
 
-## 诺伊曼级数的原理和展开
 
 ### 1. 诺伊曼级数的数学基础
 
