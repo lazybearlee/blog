@@ -1,18 +1,16 @@
 ---
-title： Self-Attention 如何解决 RNN 的长序列依赖以及并行计算效率的问题？
-date： 2025-08-01
-slug： blog-post-slug
-tags：
+title: Self-Attention 如何解决 RNN 的长序列依赖以及并行计算效率的问题？
+date: 2025-11-07
+slug: blog-post-slug
+tags:
   - 深度学习
-  - 序列模型
-  - 注意力机制
-  - 自然语言处理
-categories：
+categories:
   - 笔记
-description： 描述
-draft： true
-state： "0"
+description: 描述
+draft: true
+state: "0"
 ---
+
 #### 1. RNN/LSTM在长距离依赖与并行计算上的局限
 
 为了理解自注意力机制的优势，我们必须首先明确循环神经网络（RNN）及其变体（如LSTM、GRU）的局限性。
