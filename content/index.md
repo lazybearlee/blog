@@ -18,8 +18,8 @@ overflow: auto;  /* 新增清除浮动 */
 
 ### 👋 我是谁？
 - 🏫 **北京理工大学**  
-- 💻 **主攻方向**：`云原生技术` `Serverless` `机器学习` `深度学习`
-- 📌 **当前状态**：正在学习机器学习、深度学习
+- 💻 **主攻方向**：`云原生技术` `Serverless` `机器学习与深度学习推理` `调度问题`
+- 📌 **当前状态**：学习推理优化技术、虚拟化技术和调度中
 - 📫 **联系我**：  [<img src="https://img.icons8.com/color/48/000000/gmail.png" style="width:20px; vertical-align: middle;"/>](mailto:lz1958455046@outlook.com) [<img src="https://img.icons8.com/fluent/48/000000/github.png" style="width:20px; vertical-align: middle;"/>](https://github.com/lazybearlee)
 
 </div>
